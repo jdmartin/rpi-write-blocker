@@ -65,7 +65,7 @@ setup-auto-ingest-script () {
 
 setup-samba-share () {
     sudo mkdir -p /etc/samba;
-    cat ./src/etc/samba/smb.conf.local | sudo tee /etc/samba/smb.conf;
+    cat ./src/etc/samba/smb.conf.local | sudo tee -a /etc/samba/smb.conf;
     sudo systemctl restart samba;
 }
 
