@@ -4,11 +4,14 @@ set -euo pipefail
 
 install-required-software () {
     sudo apt-get update;
+    sudo apt-get upgrade;
     sudo apt-get install \
         needrestart \
+        python3-flask \
         samba \
         smbclient \
-        unattended-upgrades -y
+        unattended-upgrades -y;
+    sudo apt-get autoremove;
 }
 
 disable-wifi-and-bluetooth () {
@@ -18,8 +21,8 @@ disable-wifi-and-bluetooth () {
     echo "Hardening network interfaces..."
 
     # Append to config if not already present
-    sudo grep -q "dtoverlay=disable-wifi" "$CONFIG_PATH" || echo "dtoverlay=disable-wifi" >> "$CONFIG_PATH";
-    sudo grep -q "dtoverlay=disable-bt" "$CONFIG_PATH" || echo "dtoverlay=disable-bt" >> "$CONFIG_PATH";
+    grep -q "dtoverlay=disable-wifi" "$CONFIG_PATH" || echo "dtoverlay=disable-wifi" | sudo tee -a "$CONFIG_PATH" > /dev/null
+    grep -q "dtoverlay=disable-bt" "$CONFIG_PATH" || echo "dtoverlay=disable-bt" | sudo tee -a "$CONFIG_PATH" > /dev/null
 
     # Disable services
     sudo systemctl mask bluetooth.service;
@@ -55,14 +58,14 @@ setup-auto-ingest-script () {
     sudo cp ./src/etc/systemd/system/systemd-udevd.service.d/override.conf /etc/systemd/system/systemd-udevd.service.d/override.conf
     sudo chmod +x /usr/local/bin/auto-ingest.sh;
     sudo systemctl daemon-reload;
-    sudo systemctl enable --now auto-ingest@.service;
     sudo systemctl restart systemd-udevd;
     sudo udevadm control --reload-rules;
+    sudo udevadm trigger;
 }
 
 setup-samba-share () {
     sudo mkdir -p /etc/samba;
-    sudo cat ./src/etc/samba/smb.conf.local >> /etc/samba/smb.conf;
+    cat ./src/etc/samba/smb.conf.local | sudo tee /etc/samba/smb.conf;
     sudo systemctl restart samba;
 }
 
@@ -84,6 +87,14 @@ setup-local-only-network () {
     sudo nmcli connection modify Forensic-Net \
         connection.autoconnect yes;
 
+    echo " "
+    echo "Congrats on making it this far!  In a few seconds, we'll restart the system."
+    echo " "
+    echo "If everything goes well, after the reboot, you'll be able to ssh user@192.168.99.50 -i /path/to/your/key"
+    echo " "
+
+    sleep 20;
+
     sudo nmcli connection up Forensic-Net;
 }
 
@@ -97,8 +108,3 @@ setup-samba-share;
 setup-web-control;
 setup-local-only-network;
 
-echo " "
-echo "If you made it this far, it's probably a good idea to reboot!"
-echo " "
-echo "If everything goes well, you'll be able to ssh user@192.168.99.50 -i /path/to/your/key"
-echo " "
