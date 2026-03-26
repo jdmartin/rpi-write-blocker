@@ -96,6 +96,7 @@ setup-local-only-network () {
     sleep 20;
 
     sudo nmcli connection up Forensic-Net;
+    sudo systemctl reboot
 }
 
 install-required-software;
