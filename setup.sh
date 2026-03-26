@@ -11,6 +11,23 @@ install-required-software () {
         unattended-upgrades -y
 }
 
+disable-wifi-and-bluetooth () {
+    CONFIG_PATH="/boot/firmware/config.txt"
+    [ ! -f "$CONFIG_PATH" ] && CONFIG_PATH="/boot/config.txt"
+
+    echo "Hardening network interfaces..."
+
+    # Append to config if not already present
+    sudo grep -q "dtoverlay=disable-wifi" "$CONFIG_PATH" || echo "dtoverlay=disable-wifi" >> "$CONFIG_PATH";
+    sudo grep -q "dtoverlay=disable-bt" "$CONFIG_PATH" || echo "dtoverlay=disable-bt" >> "$CONFIG_PATH";
+
+    # Disable services
+    sudo systemctl mask bluetooth.service;
+    sudo systemctl mask hciuart.service;
+
+    echo "Hardware vectors disabled. Reboot required for changes to take effect."
+}
+
 setup-unattended-uprades () {
     sudo mkdir -p /etc/apt/apt.conf.d;
     sudo cp ./src/etc/apt/apt.conf.d/52unattended-upgrades-local /etc/apt/apt.conf.d/
@@ -71,6 +88,7 @@ setup-local-only-network () {
 }
 
 install-required-software;
+disable-wifi-and-bluetooth;
 setup-unattended-uprades;
 setup-udev-rules;
 setup-dconf-locks;
