@@ -1,0 +1,12 @@
+[Unit]
+Description=Web Ejector UI
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /var/www/control/app.py
+WorkingDirectory=/var/www/control
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

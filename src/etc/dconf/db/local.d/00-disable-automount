@@ -1,0 +1,6 @@
+[org/gnome/desktop/media-handling]
+automount=false
+automount-open=false
+
+[org/gnome/settings-daemon/plugins/media-keys]
+automount=false

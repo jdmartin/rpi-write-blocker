@@ -1,0 +1,8 @@
+
+[Forensic Disk]
+   comment = Read-Only Forensic Ingest
+   path = /mnt/forensic_disk
+   browseable = yes
+   read only = yes
+   guest ok = yes
+   force user = root

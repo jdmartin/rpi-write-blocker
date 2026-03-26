@@ -1,0 +1,9 @@
+# 1. Hardware Level: Force Read-Only immediately (This works fine)
+SUBSYSTEM=="block", KERNEL=="sd[a-z]", ACTION=="add", RUN+="/sbin/blockdev --setro /dev/%k"
+
+# 2. Automation Level: Trigger the Systemd service instead of the script
+SUBSYSTEM=="block", KERNEL=="sd[a-z]", ACTION=="add", TAG+="systemd", ENV{SYSTEMD_WANTS}="auto-ingest@%k.service"
+
+# 3. Cleanup Level
+SUBSYSTEM=="block", KERNEL=="sd[a-z]", ACTION=="remove", RUN+="/usr/bin/umount -l /mnt/forensic_disk"
+SUBSYSTEM=="block", KERNEL=="sd[a-z]", ACTION=="remove", RUN+="/usr/sbin/losetup -D"

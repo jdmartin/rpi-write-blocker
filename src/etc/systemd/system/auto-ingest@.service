@@ -1,0 +1,11 @@
+[Unit]
+Description=Forensic Ingest on %I
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash /usr/local/bin/auto-ingest.sh %I
+# This ensures the mount is visible to the whole system
+MountFlags=shared
+
+[Install]
+WantedBy=multi-user.target
