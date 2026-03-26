@@ -18,7 +18,9 @@ setup-unattended-uprades () {
 
 setup-udev-rules () {
     mkdir -p /etc/udev/rules.d;
-    cp ./src/etc/udev/rules.d/10-write-blocker.rules /etc/udev/rules.d/
+    cp ./src/etc/udev/rules.d/10-write-blocker.rules /etc/udev/rules.d/;
+    systemctl stop udisks2;
+    systemctl mask udisks2;
 }
 
 setup-dconf-locks () {
