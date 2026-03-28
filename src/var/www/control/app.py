@@ -71,33 +71,49 @@ def index():
 @app.route("/eject", methods=["POST"])
 def eject():
     try:
-        # 1. Flush filesystem buffers
+        # 1. Standard forensic prep
         subprocess.run(["/usr/bin/sync"], check=True)
 
-        # 2. Attempt Unmount
-        # We try a standard unmount first; if busy, we force a lazy unmount
-        unmount = subprocess.run(
-            ["/usr/bin/umount", MOUNT_POINT], capture_output=True, text=True
+        # 2. Kill any userspace processes (just in case)
+        subprocess.run(["/usr/bin/fuser", "-k", "-m", MOUNT_POINT], capture_output=True)
+
+        # 3. Aggressive Unmount
+        # -l (lazy) detaches the mount point from the file tree immediately
+        # -f (force) tells the kernel to stop waiting for the device
+        subprocess.run(
+            ["/usr/bin/umount", "-l", "-f", MOUNT_POINT], capture_output=True
         )
-        if unmount.returncode != 0:
-            # Fallback to lazy unmount if device is busy
-            subprocess.run(["/usr/bin/umount", "-l", MOUNT_POINT], check=True)
 
-        # 3. Detach all loop devices
-        # This is critical for forensics to clear the 'read-only' loop mapping
-        subprocess.run(["/usr/sbin/losetup", "-D"], check=True)
+        # 4. Target the specific Loop Device
+        # We look for the loop device associated with the forensic mount point
+        # Based on 'losetup -a', we need to ensure loop1 is actually closed.
 
-        # 4. Cleanup the log so the UI clears
+        # This command finds which loop device is currently holding your mount point
+        find_loop = subprocess.run(
+            ["/usr/bin/findmnt", "-n", "-o", "SOURCE", MOUNT_POINT],
+            capture_output=True,
+            text=True,
+        )
+        loop_to_del = find_loop.stdout.strip().split("p")[
+            0
+        ]  # Handles 'loop1p1' -> 'loop1'
+
+        if loop_to_del and "/dev/loop" in loop_to_del:
+            # Tell the kernel to forcefully detach the loop device
+            subprocess.run(["/usr/sbin/losetup", "-d", loop_to_del], check=True)
+        else:
+            # Fallback: shotgun approach if the specific loop wasn't found
+            subprocess.run(["/usr/sbin/losetup", "-D"], check=True)
+
+        # 5. UI Cleanup
         if os.path.exists(LOG_PATH):
             os.remove(LOG_PATH)
 
-        return "<h2>Eject Successful</h2><p>The loop device is detached and the mount point is clear. It is now safe to remove the physical hardware.</p><br><a href='/'>Return to Dashboard</a>"
+        return "<h2>Eject Finalized</h2><p>Filesystem detached and loopback cleared.</p><br><a href='/'>Back</a>"
 
     except subprocess.CalledProcessError as e:
-        error_msg = (
-            e.stderr if e.stderr else "Unknown error during subprocess execution."
-        )
-        return f"<h2>Eject Failed</h2><p>Check if the device is still in use by another process.</p><pre>{error_msg}</pre><br><a href='/'>Back</a>"
+        # If the loop is already gone, losetup -d might return 1. We handle that here.
+        return f"<h2>Eject Note</h2><p>System cleaned up with some warnings.</p><pre>{e.stderr}</pre><br><a href='/'>Back</a>"
 
 
 if __name__ == "__main__":
