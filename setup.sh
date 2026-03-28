@@ -11,7 +11,7 @@ install-required-software () {
         samba \
         smbclient \
         unattended-upgrades -y;
-    sudo apt-get autoremove;
+    sudo apt-get autoremove -y;
 }
 
 disable-wifi-and-bluetooth () {
