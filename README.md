@@ -18,7 +18,7 @@ The general flow for setting this up is:
 
 #### Using the imager to configure your SD card
 
-Using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/){target="_blank"}, flash the OS with the following parameters:
+Using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/), flash the OS with the following parameters:
 
 - **Device:** Raspberry Pi 4 (or whatever you're using)
 - **Operating System:** Raspberry Pi OS Lite (64-bit)
