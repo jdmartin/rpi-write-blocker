@@ -59,14 +59,54 @@ setup-auto-ingest-script () {
     sudo chmod +x /usr/local/bin/auto-ingest.sh;
     sudo systemctl daemon-reload;
     sudo systemctl restart systemd-udevd;
-    sudo udevadm control --reload-rules;
-    sudo udevadm trigger;
+
+    RULES_FILE="/etc/udev/rules.d/10-write-blocker.rules"
+
+    # 1. Run the verification and capture the output
+    if sudo udevadm verify "$RULES_FILE"; then
+        echo "[SUCCESS] Rule syntax is valid."
+
+        # 2. Reload the daemon to pick up the new file
+        sudo udevadm control --reload-rules
+
+        # 3. Trigger ONLY block devices to minimize system noise
+        # This is cleaner for forensic logs than a full system trigger
+        sudo udevadm trigger --subsystem-match=block --action=add
+
+        echo "[CONFIRMED] Write-blocker rules applied to block subsystem."
+    else
+        echo "----------------------------------------------------------"
+        echo "CRITICAL ERROR: udev rule verification failed!"
+        echo "The write-blocker has NOT been updated."
+        echo "----------------------------------------------------------"
+        exit 1
+    fi
 }
 
 setup-samba-share () {
     sudo mkdir -p /etc/samba;
     cat ./src/etc/samba/smb.conf.local | sudo tee -a /etc/samba/smb.conf;
     sudo systemctl restart samba;
+
+    echo " "
+    echo "Let's verify that the samba share is correctly setup.  Hit enter went prompted for a password (it's blank)"
+    echo " "
+    smbclient -L localhost;
+
+    echo " "
+    read -rp "Did you see 'Forensic Disk in the output? (Y/N): " confirm
+
+    case confirm in
+        Yy)
+            echo " "
+            echo "Great! Moving on..."
+            ;;
+        Nn)
+            exit 1
+        *)
+            echo "Please choose Y or N"
+            ;;
+    esac
 }
 
 setup-web-control () {
@@ -88,7 +128,7 @@ setup-local-only-network () {
         connection.autoconnect yes;
 
     echo " "
-    echo "Congrats on making it this far!  In a few seconds, we'll restart the system."
+    echo "Congrats on making it this far!  In about twenty seconds, we'll restart the system."
     echo " "
     echo "If everything goes well, after the reboot, you'll be able to ssh user@192.168.99.50 -i /path/to/your/key"
     echo " "
@@ -108,4 +148,3 @@ setup-auto-ingest-script;
 setup-samba-share;
 setup-web-control;
 setup-local-only-network;
-
