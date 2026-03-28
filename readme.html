@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Raspberry Pi Write Blocker: Setup</title>
+  <style>
+
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+  <style type="text/css">
+
+html {
+font-size: 62.5%;
+font-family:
+-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+Arial, "Noto Sans", sans-serif;
+}
+body {
+font-size: 1.8rem;
+line-height: 1.618;
+max-width: 90%;
+margin: auto;
+color: #4a4a4a;
+background-color: #f9f9f9;
+padding: 13px;
+}
+@media (max-width: 684px) {
+body {
+font-size: 1.53rem;
+}
+}
+@media (max-width: 382px) {
+body {
+font-size: 1.35rem;
+}
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+line-height: 1.1;
+font-family:
+-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+Arial, "Noto Sans", sans-serif;
+font-weight: 700;
+margin-top: 3rem;
+margin-bottom: 1.5rem;
+overflow-wrap: break-word;
+word-wrap: break-word;
+-ms-word-break: break-all;
+word-break: break-word;
+}
+h1 {
+font-size: 2.35em;
+}
+h2 {
+font-size: 2em;
+}
+h3 {
+font-size: 1.75em;
+}
+h4 {
+font-size: 1.5em;
+}
+h5 {
+font-size: 1.25em;
+}
+h6 {
+font-size: 1em;
+}
+p {
+margin-top: 0px;
+margin-bottom: 2.5rem;
+}
+small,
+sub,
+sup {
+font-size: 75%;
+}
+hr {
+border-color: #1d7484;
+}
+a {
+text-decoration: underline;
+color: #1d7484;
+}
+a:visited {
+color: #144f5a;
+}
+a:hover {
+color: #982c61;
+border-bottom: 2px solid #4a4a4a;
+}
+ul {
+padding-left: 1.4em;
+margin-top: 0px;
+margin-bottom: 2.5rem;
+}
+li {
+margin-bottom: 0.4em;
+}
+blockquote {
+margin-left: 0px;
+margin-right: 0px;
+padding-left: 1em;
+padding-top: 0.8em;
+padding-bottom: 0.8em;
+padding-right: 0.8em;
+border-left: 5px solid #1d7484;
+margin-bottom: 2.5rem;
+background-color: #f1f1f1;
+}
+blockquote p {
+margin-bottom: 0;
+}
+img,
+video {
+height: auto;
+max-width: 100%;
+margin-top: 0px;
+margin-bottom: 2.5rem;
+}
+
+pre {
+background-color: #f1f1f1;
+display: block;
+padding: 1em;
+overflow-x: auto;
+margin-top: 0px;
+margin-bottom: 2.5rem;
+font-size: 0.9em;
+}
+code,
+kbd,
+samp {
+font-size: 0.9em;
+padding: 0 0.5em;
+background-color: #f1f1f1;
+white-space: pre-wrap;
+}
+pre > code {
+padding: 0;
+background-color: transparent;
+white-space: pre;
+font-size: 1em;
+}
+
+table {
+text-align: justify;
+width: 100%;
+border-collapse: collapse;
+margin-bottom: 2rem;
+}
+td,
+th {
+padding: 0.5em;
+border-bottom: 1px solid #f1f1f1;
+}
+
+input,
+textarea {
+border: 1px solid #4a4a4a;
+}
+input:focus,
+textarea:focus {
+border: 1px solid #1d7484;
+}
+textarea {
+width: 100%;
+}
+.button,
+button,
+input[type="submit"],
+input[type="reset"],
+input[type="button"],
+input[type="file"]::file-selector-button {
+display: inline-block;
+padding: 5px 10px;
+text-align: center;
+text-decoration: none;
+white-space: nowrap;
+background-color: #1d7484;
+color: #f9f9f9;
+border-radius: 1px;
+border: 1px solid #1d7484;
+cursor: pointer;
+box-sizing: border-box;
+}
+.button:hover,
+button:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover,
+input[type="button"]:hover,
+input[type="file"]::file-selector-button:hover {
+background-color: #982c61;
+color: #f9f9f9;
+outline: 0;
+}
+.button[disabled],
+button[disabled],
+input[type="submit"][disabled],
+input[type="reset"][disabled],
+input[type="button"][disabled],
+input[type="file"][disabled] {
+cursor: default;
+opacity: 0.5;
+}
+.button:focus-visible,
+button:focus-visible,
+input[type="submit"]:focus-visible,
+input[type="reset"]:focus-visible,
+input[type="button"]:focus-visible,
+input[type="file"]:focus-visible {
+outline-style: solid;
+outline-width: 2px;
+}
+textarea,
+select,
+input {
+color: #4a4a4a;
+padding: 6px 10px; 
+margin-bottom: 10px;
+background-color: #f1f1f1;
+border: 1px solid #f1f1f1;
+border-radius: 4px;
+box-shadow: none;
+box-sizing: border-box;
+}
+textarea:focus,
+select:focus,
+input:focus {
+border: 1px solid #1d7484;
+outline: 0;
+}
+input[type="checkbox"]:focus {
+outline: 1px dotted #1d7484;
+}
+label,
+legend,
+fieldset {
+display: block;
+margin-bottom: 0.5rem;
+font-weight: 600;
+}
+</style>
+</head>
+<body>
+<h1 id="pi-write-blocker-scripts">pi-write-blocker-scripts</h1>
+<p>Last updated: 27 Mar 2026</p>
+<p>Note: This is still experimental. At the moment, it’s in heavy
+development. I would not use this for <em>any</em> serious purpose
+without serious testing!</p>
+<h3 id="general-notes">General Notes</h3>
+<p>This readme has the latest version of the setup instructions for the
+Write Blocker appliance. The historical (much more manual) setup
+instructions are found in <a href="docs/archive/setup-steps.html">docs/archive/setup-steps.html</a>.</p>
+<h3 id="setup">Setup</h3>
+<p>The general flow for setting this up is: - Use the Raspberry Pi
+imager to configure your SD card - Login and download this repository -
+Run the setup script - Reboot and connect over your private LAN switch -
+Begin using the appliance</p>
+<h4 id="using-the-imager-to-configure-your-sd-card">Using the imager to
+configure your SD card</h4>
+<p>Using the <a href="https://www.raspberrypi.com/software/" target="_blank">Raspberry Pi Imager</a>, flash the OS with the following
+parameters:</p>
+<ul>
+<li><strong>Device:</strong> Raspberry Pi 4 (or whatever you’re
+using)</li>
+<li><strong>Operating System:</strong> Raspberry Pi OS Lite (64-bit)
+<ul>
+<li><strong>Note</strong>: If you’re sure you won’t need desktop
+software, you could:
+<ul>
+<li>Select “Raspberry Pi OS Lite” from the “Raspberry Pi OS (other)
+submenu.</li>
+</ul></li>
+</ul></li>
+<li><strong>Storage:</strong> High-endurance microSD card (min
+16GB)</li>
+<li><strong>OS Customization:</strong>
+<ul>
+<li><strong>Hostname:</strong> SomethingCleverHere</li>
+<li><strong>User/Pass:</strong> [Secure credentials set]</li>
+<li><strong>SSH:</strong> Enabled via Public Key Authentication only
+(you could adjust, if needed).</li>
+<li><strong>Locale:</strong> Set to your local time zone and language
+(e.g., <code>en_GB.UTF-8</code>).</li>
+<li><strong>Connectivity:</strong> Ethernet (Preferred) or WiFi (if
+required for initial update).</li>
+<li><strong>Raspberry Pi Connect:</strong> Off, but could be enabled if
+you need.</li>
+</ul></li>
+</ul>
+<p>Once the image is finished verifying, you can insert it into the
+raspberry pi, connect it to your network, and then boot it up.</p>
+<h4 id="login-and-initial-setup">Login and Initial Setup</h4>
+<p>Upon first logging in, you might discover that there is an issue with
+your locales settings. It will alert you (probably loudly). To remedy
+this:</p>
+<ul>
+<li><code>sudo dpkg-reconfigure locales</code>
+<ul>
+<li>Select <code>en_GB.UTF-8 UTF-8</code></li>
+<li>Select <code>en_US.UTF-8 UTF-8</code></li>
+<li>Confirm Choices</li>
+<li>For default locale, select: <code>en_US.UTF-8</code> (I get it, but
+fewer things complain.)</li>
+<li>Confirm choices and exit the menu</li>
+</ul></li>
+<li>Install git:
+<code>sudo apt-get update; sudo apt-get install git -y</code></li>
+</ul>
+<p>Once completed, get the helper scripts: -
+<code>git clone https://github.com/jdmartin/rpi-write-blocker.git</code>
+- <code>cd rpi-write-blocker</code></p>
+<p>Run setup (at the end of this process, which is only slightly
+interactive, the Pi will reboot):</p>
+<p><code>./setup.sh</code></p>
+<h4 id="connecting-over-the-private-lan">Connecting over the private
+LAN</h4>
+<p>At this stage, you probably just got disconnected. It’s cool, and
+expected!</p>
+<ul>
+<li>Plug your computer into the switch via ethernet (and turn off your
+Wi-Fi)</li>
+<li>You can SSH into the Pi by using
+<code>ssh user@192.168.99.50 -i /path/to/your/key</code></li>
+<li>You should be able to access the control interface via:
+http://192.168.99.50/</li>
+</ul>
+<hr>
+<h2 id="testing-the-appliance-and-validating-the-setup">Testing the
+Appliance and Validating the Setup</h2>
+<p>Let’s start by making a baseline hash of the first 100MB of our
+device so we can compare later:</p>
+<ul>
+<li><code>dd if=/dev/sda bs=1M count=100 | sha256sum &gt; head.sha256</code></li>
+</ul>
+<p>Now, let’s make a hash of the last 100MB:</p>
+<ul>
+<li><code>dd if=/dev/sda bs=1M skip=$(($(blockdev --getsize64 /dev/sda) / 1024 / 1024 - 100)) | sha256sum &gt; tail.sha256</code></li>
+</ul>
+<p>Ok, great, let’s try modifying our disk. For my tests, I tried:</p>
+<ul>
+<li><code>touch /mnt/forensic_disk/test_file.txt</code></li>
+</ul>
+<p>This immediately returned:
+<code>touch: cannot touch &#39;/mnt/forensic_disk/test_file.txt&#39;: Read-only file system</code></p>
+<p>Next, I tried `<code>rm /mnt/forensic_disk/some_existing_file</code>
+(in my case, some_existing_file was ‘SampleData.xlsx’):</p>
+<p>This also returned:
+<code>rm: cannot remove &#39;/mnt/forensic_disk/SampleData.xlsx&#39;: Read-only file system</code></p>
+<p>Now, I want to prove that atimes aren’t being modified. For this, I
+chose another file and ran
+`<code>stat /mnt/forensic_disk/any_file.txt</code> (in my case, I chose
+‘SanDiskMemoryZone_QuickStartGuide.pdf’)</p>
+<p>The output for this one is:</p>
+<pre><code>File: /mnt/forensic_disk/SanDiskMemoryZone_QuickStartGuide.pdf
+Size: 497832        Blocks: 1024       IO Block: 32768  regular file
+Device: 259,0   Inode: 1385        Links: 1
+Access: (0755/-rwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2021-11-23 16:00:00.000000000 -0800
+Modify: 2021-10-25 11:25:00.000000000 -0700
+Change: 2021-10-25 11:25:00.000000000 -0700
+Birth: 2021-11-24 09:59:45.360000000 -0800</code></pre>
+<p>Now, I try interacting with it by using
+<code>cat /mnt/forensic_disk/SanDiskMemoryZone_QuickStartGuide.pdf &gt; /dev/null</code></p>
+<p>After this, I run the same stat command from above and compare:</p>
+<pre><code>File: /mnt/forensic_disk/SanDiskMemoryZone_QuickStartGuide.pdf
+Size: 497832        Blocks: 1024       IO Block: 32768  regular file
+Device: 259,0   Inode: 1385        Links: 1
+Access: (0755/-rwxr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2021-11-23 16:00:00.000000000 -0800
+Modify: 2021-10-25 11:25:00.000000000 -0700
+Change: 2021-10-25 11:25:00.000000000 -0700
+Birth: 2021-11-24 09:59:45.360000000 -0800</code></pre>
+<p>Hooray! No change!</p>
+<p>But let’s make sure by running those two hash commands again (with a
+slight change):</p>
+<ul>
+<li><code>dd if=/dev/sda bs=1M count=100 | sha256sum &gt; head2.sha256</code></li>
+<li><code>dd if=/dev/sda bs=1M skip=$(($(blockdev --getsize64 /dev/sda) / 1024 / 1024 - 100)) | sha256sum &gt; tail2.sha256</code></li>
+</ul>
+<p>Now, let’s compare them and make sure there’s no change. (If this
+next command returns no output, there’s no change):</p>
+<p><code>diff head.sha256 head2.sha256</code></p>
+<p>Also, compare the tails:</p>
+<p><code>diff tail.sha256 tail2.sha256</code></p>
+<p>In both cases, I had no changes! :)</p>
+<p>Now, let’s make sure our web control works.</p>
+<ul>
+<li><code>ls -al /mnt/forensic_disk</code> (should see whatever’s on the
+device)</li>
+<li>Visit web control <a href="http://192.168.99.50">http://192.168.99.50</a>, eject ls -al
+/mnt/forensic_disk (should no longer see files)</li>
+</ul>
+<pre><code>___________
+&lt; All done! &gt;
+-----------
+       \   ^__^
+        \  (oo)\_______
+           (__)\       )\/\
+               ||----w |
+               ||     ||</code></pre>
+</body>
+</html>

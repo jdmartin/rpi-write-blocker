@@ -1,10 +1,11 @@
 # pi-write-blocker-scripts
+Last updated: 27 Mar 2026
 
 Note: This is still experimental.  At the moment, it's in heavy development.  I would not use this for _any_ serious purpose without serious testing!
 
 ### General Notes
 
-This readme has the latest version of the setup instructions for the Write Blocker appliance. The historical (much more manual) setup instructions are found in [docs/archive/setup-steps.md](docs/archive/setup-steps.md).
+This readme has the latest version of the setup instructions for the Write Blocker appliance. The historical (much more manual) setup instructions are found in [docs/archive/setup-steps.html](docs/archive/setup-steps.html).
 
 ### Setup
 
@@ -134,3 +135,14 @@ Now, let's make sure our web control works.
 - `ls -al /mnt/forensic_disk` (should see whatever's on the device)
 - Visit web control [http://192.168.99.50](http://192.168.99.50), eject
 ls -al /mnt/forensic_disk (should no longer see files)
+
+```
+___________
+< All done! >
+-----------
+       \   ^__^
+        \  (oo)\_______
+           (__)\       )\/\
+               ||----w |
+               ||     ||
+```
