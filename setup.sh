@@ -94,20 +94,24 @@ setup-samba-share () {
     smbclient -L localhost;
 
     echo " "
-    read -rp "Did you see 'Forensic Disk in the output? (Y/N): " confirm
 
-    case confirm in
-        Y|y)
-            echo " "
-            echo "Great! Moving on..."
-            ;;
-        N|n)
-            exit 1
-            ;;
-        *)
-            echo "Please choose Y or N"
-            ;;
-    esac
+    while true; do
+        read -rp "Did you see 'Forensic Disk' in the output? (Y/N): " confirm
+
+        case "$confirm" in
+            [Yy]*)
+                echo -e "\nGreat! Moving on..."
+                break
+                ;;
+            [Nn]*)
+                echo -e "\nExiting per user request."
+                exit 1
+                ;;
+            *)
+                echo "Invalid input. Please choose Y or N."
+                ;;
+        esac
+    done
 }
 
 setup-web-control () {
