@@ -103,6 +103,7 @@ setup-samba-share () {
             ;;
         Nn)
             exit 1
+            ;;
         *)
             echo "Please choose Y or N"
             ;;
