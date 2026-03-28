@@ -97,11 +97,11 @@ setup-samba-share () {
     read -rp "Did you see 'Forensic Disk in the output? (Y/N): " confirm
 
     case confirm in
-        Yy)
+        Y|y)
             echo " "
             echo "Great! Moving on..."
             ;;
-        Nn)
+        N|n)
             exit 1
             ;;
         *)
