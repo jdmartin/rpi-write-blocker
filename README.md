@@ -55,6 +55,11 @@ Run setup (at the end of this process, which is only slightly interactive, the P
 
 `./setup.sh`
 
+If you'd like to setup, but not create a local-only network just yet, use:
+
+`./setup-no-local-network.sh`
+
+
 #### Connecting over the private LAN
 
 At this stage, you probably just got disconnected.  It's cool, and expected!
