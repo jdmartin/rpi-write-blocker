@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import subprocess
+import time
 from flask import Flask, render_template_string
 
 app = Flask(__name__)
@@ -73,15 +74,12 @@ def index():
     content = "System ready. Connect a device to begin ingest."
     mount_details = {"phys": "None", "loop": "None", "is_safe": True}
     
-    # 1. Read the activity log
     if os.path.exists(LOG_PATH):
         try:
             with open(LOG_PATH, "r") as f:
                 content = f.read()
-        except Exception as e:
-            content = f"Error reading log: {str(e)}"
+        except: content = "Error reading log."
 
-    # 2. Parse active mount information
     if os.path.exists(INFO_FILE):
         try:
             with open(INFO_FILE, "r") as f:
@@ -90,13 +88,12 @@ def index():
                         k, v = line.strip().split("=", 1)
                         if k == "PHYS_DEV": 
                             mount_details["phys"] = v
-                            # Protection: Don't allow ejecting the internal SD card
+                            # CRITICAL SAFETY CHECK: Protect System SD Card
                             if "mmcblk0" in v:
                                 mount_details["is_safe"] = False
                         if k == "LOOP_DEV": 
                             mount_details["loop"] = v
-        except Exception:
-            pass
+        except: pass
 
     return render_template_string(HTML_PAGE, log_content=content, details=mount_details)
 
@@ -104,7 +101,6 @@ def index():
 def eject():
     mount_info = {}
     
-    # Read session data to know exactly what to kill
     if os.path.exists(INFO_FILE):
         try:
             with open(INFO_FILE, "r") as f:
@@ -112,48 +108,44 @@ def eject():
                     if "=" in line:
                         k, v = line.strip().split("=", 1)
                         mount_info[k] = v
-        except Exception as e:
-            print(f"Metadata read error: {e}")
+        except: pass
 
-    # Safety: Refuse to eject if it's the system SD card
-    if "mmcblk0" in mount_info.get("PHYS_DEV", ""):
-        return "<h2>Operation Blocked</h2><p>Cannot eject system storage.</p><br><a href='/'>Back</a>"
+    # --- FIREWALL: RE-VALIDATE DEVICE BEFORE ACTION ---
+    target_phys = mount_info.get("PHYS_DEV", "")
+    if "mmcblk0" in target_phys or target_phys == "":
+        return "<h2>Safety Blocked</h2><p>Invalid or System device detected. Eject refused.</p><br><a href='/'>Back</a>"
 
     try:
-        # 1. Forensic Prep
-        subprocess.run(["/usr/bin/sync"], check=True)
+        # 1. Sync data
+        subprocess.run(["sudo", "/usr/bin/sync"], check=True)
 
-        # 2. Kill processes accessing the mount
-        subprocess.run(["/usr/bin/fuser", "-k", "-m", MOUNT_POINT], capture_output=True)
+        # 2. Force-kill processes holding the mount (Fixes the "Savvy User" issue)
+        # This will kill any shell or 'dd' process currently in the mount point
+        subprocess.run(["sudo", "/usr/bin/fuser", "-k", "-9", "-m", MOUNT_POINT], capture_output=True)
 
-        # 3. Unmount
-        subprocess.run(["/usr/bin/umount", "-l", "-f", MOUNT_POINT], capture_output=True)
+        # 3. Lazy Unmount (The most reliable way to detach)
+        subprocess.run(["sudo", "/usr/bin/umount", "-l", "-f", MOUNT_POINT], check=True)
 
         # 4. Detach Loop Device
         loop_to_del = mount_info.get("LOOP_DEV")
-        if not loop_to_del:
-            # Fallback check
-            find_loop = subprocess.run(["/usr/bin/findmnt", "-n", "-o", "SOURCE", MOUNT_POINT], capture_output=True, text=True)
-            loop_to_del = find_loop.stdout.strip().split("p")[0]
-
+        time.sleep(0.5) # Short settle for the lazy unmount
         if loop_to_del and "/dev/loop" in loop_to_del:
-            subprocess.run(["/usr/sbin/losetup", "-d", loop_to_del], check=True)
+            subprocess.run(["sudo", "/usr/sbin/losetup", "-d", loop_to_del], capture_output=True)
         else:
-            subprocess.run(["/usr/sbin/losetup", "-D"], check=True)
+            subprocess.run(["sudo", "/usr/sbin/losetup", "-D"], capture_output=True)
 
-        # 5. Physical Disconnect
-        phys_dev = mount_info.get("PHYS_DEV")
-        if phys_dev:
-            subprocess.run(["/usr/bin/udisksctl", "power-off", "-b", phys_dev], capture_output=True)
+        # 5. Physical Power Off
+        if target_phys:
+            subprocess.run(["sudo", "/usr/bin/udisksctl", "power-off", "-b", target_phys], capture_output=True)
 
         # 6. Cleanup session files
         if os.path.exists(LOG_PATH): os.remove(LOG_PATH)
         if os.path.exists(INFO_FILE): os.remove(INFO_FILE)
 
-        return "<h2>Eject Finalized</h2><p>Hardware powered down safely.</p><br><a href='/'>Back</a>"
+        return "<h2>Eject Finalized</h2><p>Process terminated and hardware powered down.</p><br><a href='/'>Back</a>"
 
     except Exception as e:
-        return f"<h2>Eject Warning</h2><p>Cleanup finished with errors: {str(e)}</p><br><a href='/'>Back</a>"
+        return f"<h2>Eject Warning</h2><p>Manual cleanup may be required: {str(e)}</p><br><a href='/'>Back</a>"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80, debug=False)
