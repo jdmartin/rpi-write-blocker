@@ -262,7 +262,7 @@ font-weight: 600;
 </head>
 <body>
 <h1 id="pi-write-blocker-scripts">pi-write-blocker-scripts</h1>
-<p>Last updated: 27 Mar 2026</p>
+<p>Last updated: 22 Apr 2026</p>
 <p>Note: This is still experimental. At the moment, it’s in heavy
 development. I would not use this for <em>any</em> serious purpose
 without serious testing!</p>
@@ -332,8 +332,8 @@ fewer things complain.)</li>
 <p>Run setup (at the end of this process, which is only slightly
 interactive, the Pi will reboot):</p>
 <p><code>./setup.sh</code></p>
-<p>If you’d like to setup, but not create a local-only network just yet,
-use:</p>
+<p>If you’d like to setup, <strong>but not create a local-only network
+just yet</strong>, use:</p>
 <p><code>./setup-no-local-network.sh</code></p>
 <h4 id="connecting-over-the-private-lan">Connecting over the private
 LAN</h4>
@@ -350,14 +350,19 @@ http://192.168.99.50/</li>
 <hr>
 <h2 id="testing-the-appliance-and-validating-the-setup">Testing the
 Appliance and Validating the Setup</h2>
-<p>Let’s start by making a baseline hash of the first 100MB of our
+<p>We’ll need a place to do some tests:</p>
+<ul>
+<li><code>mkdir -p /tmp/testing</code></li>
+<li><code>cd /tmp/testing</code></li>
+</ul>
+<p>Now, let’s start by making a baseline hash of the first 100MB of our
 device so we can compare later:</p>
 <ul>
-<li><code>dd if=/dev/sda bs=1M count=100 | sha256sum &gt; head.sha256</code></li>
+<li><code>sudo dd if=$(grep PHYS_DEV /tmp/.current_mount.info | cut -d= -f2) bs=1M count=100 | sha256sum &gt; head.sha256</code></li>
 </ul>
 <p>Now, let’s make a hash of the last 100MB:</p>
 <ul>
-<li><code>dd if=/dev/sda bs=1M skip=$(($(blockdev --getsize64 /dev/sda) / 1024 / 1024 - 100)) | sha256sum &gt; tail.sha256</code></li>
+<li><code>sudo dd if=$(grep PHYS_DEV /tmp/.current_mount.info | cut -d= -f2) bs=1M skip=$(($(sudo blockdev --getsize64 $(grep PHYS_DEV /tmp/.current_mount.info | cut -d= -f2)) / 1024 / 1024 - 100)) | sha256sum &gt; tail.sha256</code></li>
 </ul>
 <p>Ok, great, let’s try modifying our disk. For my tests, I tried:</p>
 <ul>
@@ -365,13 +370,13 @@ device so we can compare later:</p>
 </ul>
 <p>This immediately returned:
 <code>touch: cannot touch &#39;/mnt/forensic_disk/test_file.txt&#39;: Read-only file system</code></p>
-<p>Next, I tried `<code>rm /mnt/forensic_disk/some_existing_file</code>
+<p>Next, I tried <code>rm /mnt/forensic_disk/some_existing_file</code>
 (in my case, some_existing_file was ‘SampleData.xlsx’):</p>
 <p>This also returned:
 <code>rm: cannot remove &#39;/mnt/forensic_disk/SampleData.xlsx&#39;: Read-only file system</code></p>
 <p>Now, I want to prove that atimes aren’t being modified. For this, I
 chose another file and ran
-`<code>stat /mnt/forensic_disk/any_file.txt</code> (in my case, I chose
+<code>stat /mnt/forensic_disk/any_file.txt</code> (in my case, I chose
 ‘SanDiskMemoryZone_QuickStartGuide.pdf’)</p>
 <p>The output for this one is:</p>
 <pre><code>File: /mnt/forensic_disk/SanDiskMemoryZone_QuickStartGuide.pdf
@@ -397,8 +402,8 @@ Birth: 2021-11-24 09:59:45.360000000 -0800</code></pre>
 <p>But let’s make sure by running those two hash commands again (with a
 slight change):</p>
 <ul>
-<li><code>dd if=/dev/sda bs=1M count=100 | sha256sum &gt; head2.sha256</code></li>
-<li><code>dd if=/dev/sda bs=1M skip=$(($(blockdev --getsize64 /dev/sda) / 1024 / 1024 - 100)) | sha256sum &gt; tail2.sha256</code></li>
+<li><code>sudo dd if=$(grep PHYS_DEV /tmp/.current_mount.info | cut -d= -f2) bs=1M count=100 | sha256sum &gt; head2.sha256</code></li>
+<li><code>sudo dd if=$(grep PHYS_DEV /tmp/.current_mount.info | cut -d= -f2) bs=1M skip=$(($(sudo blockdev --getsize64 $(grep PHYS_DEV /tmp/.current_mount.info | cut -d= -f2)) / 1024 / 1024 - 100)) | sha256sum &gt; tail2.sha256</code></li>
 </ul>
 <p>Now, let’s compare them and make sure there’s no change. (If this
 next command returns no output, there’s no change):</p>
