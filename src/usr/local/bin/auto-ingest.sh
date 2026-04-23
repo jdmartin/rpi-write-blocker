@@ -63,6 +63,11 @@ if $MOUNTPOINT -q "$MOUNT_POINT"; then
     echo "PHYS_DEV=$DEVICE" > "$INFO_FILE"
     echo "LOOP_DEV=$LOOP_DEV" >> "$INFO_FILE"
     chmod 666 "$INFO_FILE"
+
+    # 2. NEW: Refresh Network Shares so clients see the disk immediately
+    /usr/sbin/exportfs -ar             # Reloads NFS exports
+    /usr/bin/smbcontrol all reload-config  # Tells Samba to Refresh
+
     exit 0
 else
     # Cleanup loop if mount failed
