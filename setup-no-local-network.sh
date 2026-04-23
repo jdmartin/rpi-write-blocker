@@ -7,6 +7,7 @@ install-required-software () {
     sudo apt-get upgrade;
     sudo apt-get install \
         needrestart \
+        nfs-kernel-server \
         python3-flask \
         samba \
         smbclient \
@@ -83,7 +84,7 @@ setup-auto-ingest-script () {
     fi
 }
 
-setup-samba-share () {
+setup-samba-and-nfs-share () {
     sudo mkdir -p /etc/samba;
     cat ./src/etc/samba/smb.conf.local | sudo tee -a /etc/samba/smb.conf;
     sudo systemctl restart samba;
@@ -112,6 +113,9 @@ setup-samba-share () {
                 ;;
         esac
     done
+
+    # Now the NFS bit...
+    cat ./src/etc/exports | sudo tee -a /etc/exports;
 }
 
 setup-web-control () {
@@ -128,5 +132,5 @@ setup-unattended-uprades;
 setup-udev-rules;
 setup-dconf-locks;
 setup-auto-ingest-script;
-setup-samba-share;
+setup-samba-and-nfs-share;
 setup-web-control;
