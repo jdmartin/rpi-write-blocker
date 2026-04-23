@@ -16,6 +16,12 @@ UMOUNT="/usr/bin/umount"
 MKDIR="/usr/bin/mkdir"
 MOUNTPOINT="/usr/bin/mountpoint"
 
+# SAFETY: Never ingest the boot or root partitions
+if [[ "$DEVICE_NODE" == "mmcblk0"* ]]; then
+    echo "Access denied: Target is system storage."
+    exit 1
+fi
+
 # 1. Forensic Zero-Check
 $BLOCKDEV --setro "$DEVICE"
 
