@@ -1,5 +1,5 @@
 # pi-write-blocker-scripts
-Last updated: 27 Mar 2026
+Last updated: 22 Apr 2026
 
 Note: This is still experimental.  At the moment, it's in heavy development.  I would not use this for _any_ serious purpose without serious testing!
 
