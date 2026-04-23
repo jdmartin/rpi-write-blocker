@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 import os
 import subprocess
-
 from flask import Flask, redirect, render_template_string, url_for
 
 app = Flask(__name__)
 
-# The path to the debug log used in auto-ingest.sh
+# Paths used by auto-ingest.sh and Thoth appliance
 LOG_PATH = "/tmp/write_blocker_debug.log"
 MOUNT_POINT = "/mnt/forensic_disk"
+INFO_FILE = "/tmp/.current_mount.info"
 
 HTML_PAGE = """
 <!DOCTYPE html>
@@ -54,7 +54,6 @@ HTML_PAGE = """
 </html>
 """
 
-
 @app.route("/")
 def index():
     content = "No active ingest detected. System ready for device..."
@@ -64,58 +63,71 @@ def index():
                 content = f.read()
         except Exception as e:
             content = f"Error reading log: {str(e)}"
-
     return render_template_string(HTML_PAGE, log_content=content)
-
 
 @app.route("/eject", methods=["POST"])
 def eject():
+    mount_info = {}
+    
+    # Try to load session data from the info file created by auto-ingest.sh
+    if os.path.exists(INFO_FILE):
+        try:
+            with open(INFO_FILE, "r") as f:
+                for line in f:
+                    if "=" in line:
+                        k, v = line.strip().split("=", 1)
+                        mount_info[k] = v
+        except Exception as e:
+            print(f"Warning: Could not parse {INFO_FILE}: {e}")
+
     try:
         # 1. Standard forensic prep
         subprocess.run(["/usr/bin/sync"], check=True)
 
-        # 2. Kill any userspace processes (just in case)
+        # 2. Kill any userspace processes accessing the mount point
         subprocess.run(["/usr/bin/fuser", "-k", "-m", MOUNT_POINT], capture_output=True)
 
         # 3. Aggressive Unmount
-        # -l (lazy) detaches the mount point from the file tree immediately
-        # -f (force) tells the kernel to stop waiting for the device
-        subprocess.run(
-            ["/usr/bin/umount", "-l", "-f", MOUNT_POINT], capture_output=True
-        )
+        # -l (lazy) detaches the mount point immediately
+        # -f (force) for network/stuck filesystems
+        subprocess.run(["/usr/bin/umount", "-l", "-f", MOUNT_POINT], capture_output=True)
 
         # 4. Target the specific Loop Device
-        # We look for the loop device associated with the forensic mount point
-        # Based on 'losetup -a', we need to ensure loop1 is actually closed.
-
-        # This command finds which loop device is currently holding your mount point
-        find_loop = subprocess.run(
-            ["/usr/bin/findmnt", "-n", "-o", "SOURCE", MOUNT_POINT],
-            capture_output=True,
-            text=True,
-        )
-        loop_to_del = find_loop.stdout.strip().split("p")[
-            0
-        ]  # Handles 'loop1p1' -> 'loop1'
+        loop_to_del = mount_info.get("LOOP_DEV")
+        
+        # Fallback: Find loop via findmnt if info file was missing
+        if not loop_to_del:
+            find_loop = subprocess.run(
+                ["/usr/bin/findmnt", "-n", "-o", "SOURCE", MOUNT_POINT],
+                capture_output=True, text=True
+            )
+            raw_source = find_loop.stdout.strip()
+            if "loop" in raw_source:
+                loop_to_del = raw_source.split("p")[0] # 'loop1p1' -> 'loop1'
 
         if loop_to_del and "/dev/loop" in loop_to_del:
-            # Tell the kernel to forcefully detach the loop device
             subprocess.run(["/usr/sbin/losetup", "-d", loop_to_del], check=True)
         else:
-            # Fallback: shotgun approach if the specific loop wasn't found
+            # Final fallback: Shotgun approach
             subprocess.run(["/usr/sbin/losetup", "-D"], check=True)
 
-        # 5. UI Cleanup
+        # 5. Physical Eject (Power Off)
+        # This prevents udev from re-detecting the drive until physically swapped
+        phys_dev = mount_info.get("PHYS_DEV")
+        if phys_dev:
+            subprocess.run(["/usr/bin/udisksctl", "power-off", "-b", phys_dev], capture_output=True)
+
+        # 6. Cleanup
         if os.path.exists(LOG_PATH):
             os.remove(LOG_PATH)
+        if os.path.exists(INFO_FILE):
+            os.remove(INFO_FILE)
 
-        return "<h2>Eject Finalized</h2><p>Filesystem detached and loopback cleared.</p><br><a href='/'>Back</a>"
+        return "<h2>Eject Finalized</h2><p>Filesystem detached, loopback cleared, and drive powered down.</p><br><a href='/'>Back</a>"
 
     except subprocess.CalledProcessError as e:
-        # If the loop is already gone, losetup -d might return 1. We handle that here.
         return f"<h2>Eject Note</h2><p>System cleaned up with some warnings.</p><pre>{e.stderr}</pre><br><a href='/'>Back</a>"
 
-
 if __name__ == "__main__":
-    # Running on port 80 requires sudo/root permissions
+    # Note: Running on port 80 requires sudo/root permissions
     app.run(host="0.0.0.0", port=80, debug=False)
