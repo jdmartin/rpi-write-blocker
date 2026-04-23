@@ -5,8 +5,10 @@ if [ -z "$DEVICE_NODE" ]; then echo "Usage: $0 <device_node>"; exit 1; fi
 
 DEVICE="/dev/$DEVICE_NODE"
 MOUNT_POINT="/mnt/forensic_disk"
+INFO_FILE="/tmp/.current_mount.info"
 
 # Define Full Paths
+UDEVADM="/usr/bin/udevadm"
 BLOCKDEV="/sbin/blockdev"
 LOSETUP="/usr/sbin/losetup"
 MOUNT="/usr/bin/mount"
@@ -50,9 +52,14 @@ fi
 
 $MOUNT -o "$MOUNT_OPTS" "$TARGET_DEV" "$MOUNT_POINT"
 
-# 5. Final Confirmation
 if $MOUNTPOINT -q "$MOUNT_POINT"; then
+    # Only write the info file if we actually succeeded
+    echo "PHYS_DEV=$DEVICE" > "$INFO_FILE"
+    echo "LOOP_DEV=$LOOP_DEV" >> "$INFO_FILE"
+    chmod 666 "$INFO_FILE"
     exit 0
 else
+    # Cleanup loop if mount failed
+    $LOSETUP -d "$LOOP_DEV"
     exit 1
 fi
