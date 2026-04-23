@@ -62,7 +62,7 @@ If you'd like to setup, **but not create a local-only network just yet**, use:
 
 #### Connecting over the private LAN
 
-At this stage, you probably just got disconnected.  It's cool, and expected!
+At this stage (only if you're using **setup.sh**), you probably just got disconnected.  It's cool, and expected!
 
 - Plug your computer into the switch via ethernet (and turn off your Wi-Fi)
 - You can SSH into the Pi by using `ssh user@192.168.99.50 -i /path/to/your/key`
@@ -76,6 +76,8 @@ We'll need a place to do some tests:
 
 - `mkdir -p /tmp/testing`
 - `cd /tmp/testing`
+
+At this point, you can insert a device for testing.  I recommend a flash drive that you have no emotional or professional interest in (just in case!)...
 
 Now, let's start by making a baseline hash of the first 100MB of our device so we can compare later:
 
