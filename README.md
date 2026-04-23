@@ -74,11 +74,11 @@ At this stage, you probably just got disconnected.  It's cool, and expected!
 
 Let's start by making a baseline hash of the first 100MB of our device so we can compare later:
 
-- `dd if=/dev/sda bs=1M count=100 | sha256sum > head.sha256`
+- `sudo dd if=/dev/sda bs=1M count=100 | sha256sum > head.sha256`
 
 Now, let's make a hash of the last 100MB:
 
-- `dd if=/dev/sda bs=1M skip=$(($(blockdev --getsize64 /dev/sda) / 1024 / 1024 - 100)) | sha256sum > tail.sha256`
+- `sudo dd if=/dev/sda bs=1M skip=$(($(blockdev --getsize64 /dev/sda) / 1024 / 1024 - 100)) | sha256sum > tail.sha256`
 
 Ok, great, let's try modifying our disk.  For my tests, I tried:
 
@@ -122,8 +122,8 @@ Hooray! No change!
 
 But let's make sure by running those two hash commands again (with a slight change):
 
-- `dd if=/dev/sda bs=1M count=100 | sha256sum > head2.sha256`
-- `dd if=/dev/sda bs=1M skip=$(($(blockdev --getsize64 /dev/sda) / 1024 / 1024 - 100)) | sha256sum > tail2.sha256`
+- `sudo dd if=/dev/sda bs=1M count=100 | sha256sum > head2.sha256`
+- `sudo dd if=/dev/sda bs=1M skip=$(($(blockdev --getsize64 /dev/sda) / 1024 / 1024 - 100)) | sha256sum > tail2.sha256`
 
 Now, let's compare them and make sure there's no change.  (If this next command returns no output, there's no change):
 
