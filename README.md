@@ -55,7 +55,7 @@ Run setup (at the end of this process, which is only slightly interactive, the P
 
 `./setup.sh`
 
-If you'd like to setup, but not create a local-only network just yet, use:
+If you'd like to setup, **but not create a local-only network just yet**, use:
 
 `./setup-no-local-network.sh`
 
@@ -72,13 +72,18 @@ At this stage, you probably just got disconnected.  It's cool, and expected!
 
 ## Testing the Appliance and Validating the Setup
 
-Let's start by making a baseline hash of the first 100MB of our device so we can compare later:
+We'll need a place to do some tests:
 
-- `sudo dd if=/dev/sda bs=1M count=100 | sha256sum > head.sha256`
+- `mkdir -p /tmp/testing`
+- `cd /tmp/testing`
+
+Now, let's start by making a baseline hash of the first 100MB of our device so we can compare later:
+
+- `sudo dd if=$(grep PHYS_DEV /tmp/.current_mount.info | cut -d= -f2) bs=1M count=100 | sha256sum > head.sha256`
 
 Now, let's make a hash of the last 100MB:
 
-- `sudo dd if=/dev/sda bs=1M skip=$(($(blockdev --getsize64 /dev/sda) / 1024 / 1024 - 100)) | sha256sum > tail.sha256`
+- `sudo dd if=$(grep PHYS_DEV /tmp/.current_mount.info | cut -d= -f2) bs=1M skip=$(($(sudo blockdev --getsize64 $(grep PHYS_DEV /tmp/.current_mount.info | cut -d= -f2)) / 1024 / 1024 - 100)) | sha256sum > tail.sha256`
 
 Ok, great, let's try modifying our disk.  For my tests, I tried:
 
@@ -86,11 +91,11 @@ Ok, great, let's try modifying our disk.  For my tests, I tried:
 
 This immediately returned: `touch: cannot touch '/mnt/forensic_disk/test_file.txt': Read-only file system`
 
-Next, I tried ``rm /mnt/forensic_disk/some_existing_file` (in my case, some_existing_file was 'SampleData.xlsx'):
+Next, I tried `rm /mnt/forensic_disk/some_existing_file` (in my case, some_existing_file was 'SampleData.xlsx'):
 
 This also returned: `rm: cannot remove '/mnt/forensic_disk/SampleData.xlsx': Read-only file system`
 
-Now, I want to prove that atimes aren't being modified.  For this, I chose another file and ran ``stat /mnt/forensic_disk/any_file.txt` (in my case, I chose 'SanDiskMemoryZone_QuickStartGuide.pdf')
+Now, I want to prove that atimes aren't being modified.  For this, I chose another file and ran `stat /mnt/forensic_disk/any_file.txt` (in my case, I chose 'SanDiskMemoryZone_QuickStartGuide.pdf')
 
 The output for this one is:
 ```
@@ -122,8 +127,8 @@ Hooray! No change!
 
 But let's make sure by running those two hash commands again (with a slight change):
 
-- `sudo dd if=/dev/sda bs=1M count=100 | sha256sum > head2.sha256`
-- `sudo dd if=/dev/sda bs=1M skip=$(($(blockdev --getsize64 /dev/sda) / 1024 / 1024 - 100)) | sha256sum > tail2.sha256`
+- `sudo dd if=$(grep PHYS_DEV /tmp/.current_mount.info | cut -d= -f2) bs=1M count=100 | sha256sum > head2.sha256`
+- `sudo dd if=$(grep PHYS_DEV /tmp/.current_mount.info | cut -d= -f2) bs=1M skip=$(($(sudo blockdev --getsize64 $(grep PHYS_DEV /tmp/.current_mount.info | cut -d= -f2)) / 1024 / 1024 - 100)) | sha256sum > tail2.sha256`
 
 Now, let's compare them and make sure there's no change.  (If this next command returns no output, there's no change):
 
