@@ -418,9 +418,15 @@ next command returns no output, there’s no change):</p>
 <ul>
 <li><code>ls -al /mnt/forensic_disk</code> (should see whatever’s on the
 device)</li>
-<li>Visit web control <a href="http://192.168.99.50">http://192.168.99.50</a>, eject ls -al
-/mnt/forensic_disk (should no longer see files)</li>
+<li>Visit web control <a href="http://192.168.99.50">http://192.168.99.50</a>, eject
+<ul>
+<li>N.B. The above IP might differ, if you’re using a different network
+setup (e.g. you used <code>setup-no-local-network.sh</code> instead of
+<code>setup.sh</code>)</li>
+</ul></li>
 </ul>
+<p><code>ls -al /mnt/forensic_disk</code> (should no longer see
+files)</p>
 <pre><code>___________
 &lt; All done! &gt;
 -----------

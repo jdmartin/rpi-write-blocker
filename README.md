@@ -146,7 +146,9 @@ Now, let's make sure our web control works.
 
 - `ls -al /mnt/forensic_disk` (should see whatever's on the device)
 - Visit web control [http://192.168.99.50](http://192.168.99.50), eject
-ls -al /mnt/forensic_disk (should no longer see files)
+  - N.B. The above IP might differ, if you're using a different network setup (e.g. you used `setup-no-local-network.sh` instead of `setup.sh`)
+
+`ls -al /mnt/forensic_disk` (should no longer see files)
 
 ```
 ___________
