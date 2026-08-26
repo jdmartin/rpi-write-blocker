@@ -130,21 +130,17 @@ setup-local-only-network () {
     sudo nmcli connection add type ethernet \
         con-name Forensic-Net \
         ifname eth0 \
-        ipv4.method shared \
+        ipv4.method manual \
         ipv4.addresses 192.168.99.50/24;
 
     sudo nmcli connection modify Forensic-Net \
         connection.autoconnect yes;
 
     echo " "
-    echo "Congrats on making it this far!  In about twenty seconds, we'll restart the system."
-    echo " "
-    echo "If everything goes well, after the reboot, you'll be able to ssh user@192.168.99.50 -i /path/to/your/key"
+    echo "Configuration applied. Rebooting now..."
     echo " "
 
-    sleep 20;
-
-    sudo nmcli connection up Forensic-Net;
+    # Reboot immediately without bouncing the active SSH interface mid-script
     sudo systemctl reboot
 }
 
