@@ -29,18 +29,30 @@ $BLOCKDEV --setro "$DEVICE"
 $UMOUNT -l "$MOUNT_POINT" 2>/dev/null
 $LOSETUP -D
 
-# 3. Setup Loopback
-LOOP_DEV=$($LOSETUP -r --find --partscan --show "$DEVICE")
+# 3. Setup Loopback (Handle both partitioned and unpartitioned whole media gracefully)
+HAS_PARTITIONS=$(lsblk -no TYPE "$DEVICE" | grep -q "part" && echo "yes" || echo "no")
 
-# --- SAFETY: Wait for kernel to create partition nodes ---
-$UDEVADM settle --timeout=5
+if [ "$HAS_PARTITIONS" = "yes" ]; then
+    LOOP_DEV=$($LOSETUP -r --find --partscan --show "$DEVICE")
+else
+    LOOP_DEV=$($LOSETUP -r --find --show "$DEVICE")
+fi
+
+# --- SAFETY: Wait up to 10 seconds specifically for the loop device node to appear ---
+for i in {1..20}; do
+    [ -b "$LOOP_DEV" ] && break
+    sleep 0.5
+done
 
 # 4. Attempt Mount
 $MKDIR -p "$MOUNT_POINT"
 
-# 4. Dynamic Partition Detection
-# This finds the first partition (p1 or 1) regardless of the naming convention
-TARGET_DEV=$(lsblk -lnpo NAME "$LOOP_DEV" | grep -vE "^$LOOP_DEV$" | head -n1)
+# 5. Dynamic Partition Detection
+if [ "$HAS_PARTITIONS" = "yes" ]; then
+    TARGET_DEV=$(lsblk -lnpo NAME "$LOOP_DEV" | grep -vE "^$LOOP_DEV$" | head -n1)
+else
+    TARGET_DEV=""
+fi
 
 # Fallback: If no partitions are found, attempt to mount the raw loop device (Superfloppy)
 if [ -z "$TARGET_DEV" ]; then
@@ -64,7 +76,7 @@ if $MOUNTPOINT -q "$MOUNT_POINT"; then
     echo "LOOP_DEV=$LOOP_DEV" >> "$INFO_FILE"
     chmod 666 "$INFO_FILE"
 
-    # 2. NEW: Refresh Network Shares so clients see the disk immediately
+    # Refresh Network Shares so clients see the disk immediately
     /usr/sbin/exportfs -ar             # Reloads NFS exports
     /usr/bin/smbcontrol all reload-config  # Tells Samba to Refresh
 
